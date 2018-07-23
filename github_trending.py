@@ -75,15 +75,12 @@ def print_data(data_to_print, interval_a, interval_b):
     for repo_name, repo_info in data_to_print.items():
         print(delimiter)
         repo_url, repo_owner, stars, opened_issues_count = repo_info
-        print("repo_name: {}\n"
-              "repo_url: {}\nrepo_owner: {}\nstars: {}\n"
-              "opened_issues_count: {}".format(
-                  repo_name,
-                  repo_url,
-                  repo_owner,
-                  stars,
-                  opened_issues_count
-              ))
+        print("repo_name: ", repo_name,
+              "\nrepo_url: ", repo_url,
+              "\nrepo_owner: ", repo_owner,
+              "\nstars: ", stars,
+              "\nopened_issues_count: ", opened_issues_count
+              )
 
 
 if __name__ == "__main__":

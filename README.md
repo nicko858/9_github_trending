@@ -20,7 +20,6 @@ The program is represented by the module github_trending.py. Module github_trend
 
 The program uses these libs from Python standart and third-party libraries:
 
-```json```
 ```datetime```
 ```request```
 
@@ -28,6 +27,7 @@ The program uses these libs from Python standart and third-party libraries:
 
 - The program connects to the https://github.com/ 
 - Using ```search/repositories```- method, gets top-20 -data trending repositories of the last week (The trend repository has a lot of stars)
+- Using ```list-issues``` - method to get opened issues
 - Prints result in human-readble format  
 
 # How to Install

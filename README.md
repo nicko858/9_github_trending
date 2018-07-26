@@ -6,14 +6,17 @@ The script provides data of the most github's trending repositories for the last
 
 The program is represented by the module github_trending.py. Module github_trending.py contains the following functions:
 
+- ```extract_data_from_repo()```
+- ```get_only_open_issues_amount()```
 - ```get_repo_name()```
-- ```get_repo_open_issues_count()```
 - ```get_repo_owner()```
 - ```get_repo_url()```
 - ```get_stars_count()```
+- ```get_total_open_issues_amount()```
 - ```get_trending_repositories()```
-- ```make_data_to_print()```
-- ```print_data()```
+- ```print_delimiter()```
+- ```print_repo_data()```
+- ```print_title()```
 
 The program uses these libs from Python standart and third-party libraries:
 

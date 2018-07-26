@@ -3,22 +3,24 @@ from requests import Timeout
 from requests import ConnectionError
 from datetime import date
 from datetime import timedelta
-import json
-from json import JSONDecodeError
 
 
-def get_trending_repositories(api_url, top_size, interval_a, interval_b):
+def get_trending_repositories(api_url, top_size, period):
+    date_to = date.today()
+    date_from = date_to - timedelta(days=period)
     method = "search/repositories"
-    query = "created:{}..{}".format(interval_b, interval_a)
-    target_url = ("{}{}?q={}&sort=stars&per_page={}".format(
-        api_url,
-        method,
-        query,
-        top_size
-    ))
+    target_url = "{}{}".format(api_url, method)
+    parameters = {
+        'q': ("created:{}..{}".format(date_from, date_to)),
+        'per_page': top_size,
+        'sort': 'stars'
+        }
+    response_code_ok = 200
     try:
-        response = requests.get(target_url)
-        return response.text
+        response = requests.get(target_url, params=parameters)
+        if response.status_code != response_code_ok:
+            raise ConnectionError
+        return response.json()['items']
     except (Timeout, ConnectionError):
         return None
 
@@ -39,64 +41,97 @@ def get_repo_url(repo):
     return repo["html_url"]
 
 
-def get_repo_open_issues_count(repo):
+def get_total_open_issues_amount(repo):
     return repo["open_issues"]
 
 
-def make_data_to_print(repos):
+def print_delimiter(count):
+    delimiter = "*" * count
+    print(delimiter)
+
+
+def get_only_open_issues_amount(
+        api_url,
+        repo_owner,
+        repo_name,
+        total_open_issues_count
+):
+    method = "repos/{}/{}/issues".format(repo_owner, repo_name)
+    target_url = "{}{}".format(api_url, method)
+    parameters = {'per_page': total_open_issues_count, 'state': 'open'}
+    response_code_ok = 200
     try:
-        parsed_data = json.loads(repos)
-        data_to_print = {}
-        repos = parsed_data["items"]
-        for repo in repos:
-            repo_name = get_repo_name(repo)
-            repo_url = get_repo_url(repo)
-            repo_owner = get_repo_owner(repo)
-            stars = get_stars_count(repo)
-            open_issues_count = get_repo_open_issues_count(repo)
-            data_to_print[repo_name] = [
-                repo_owner,
-                repo_url,
-                stars,
-                open_issues_count
-            ]
-        return data_to_print
-    except JSONDecodeError:
+        response = requests.get(target_url, params=parameters)
+        if response.status_code != response_code_ok:
+            raise ConnectionError
+    except (Timeout, ConnectionError):
         return None
+    issues_count = 0
+    for issue in response.json():
+        if 'pull_request' not in issue:
+            issues_count += 1
+    return issues_count
 
 
-def print_data(data_to_print, interval_a, interval_b):
-    delimiter = "*" * 90
-    print("\nThe most trending github repositories"
-          " for the period from {} to {}:\n".format(
-           interval_b,
-           interval_a
-          ))
-    for repo_name, repo_info in data_to_print.items():
-        print(delimiter)
-        repo_url, repo_owner, stars, opened_issues_count = repo_info
-        print("repo_name: ", repo_name,
-              "\nrepo_url: ", repo_url,
-              "\nrepo_owner: ", repo_owner,
-              "\nstars: ", stars,
-              "\nopened_issues_count: ", opened_issues_count
-              )
+def extract_data_from_repo(repo):
+    try:
+        issues_and_pull_requests_count = (get_total_open_issues_amount
+                                          (repo))
+        repo_name = get_repo_name(repo)
+        repo_url = get_repo_url(repo)
+        repo_owner = get_repo_owner(repo)
+        stars = get_stars_count(repo)
+        issues_amount = get_only_open_issues_amount(
+            api_url,
+            repo_owner,
+            repo_name,
+            issues_and_pull_requests_count
+        )
+        if issues_amount is None:
+            return None
+    except (ValueError, KeyError, TypeError):
+        return "Invalid data returned! Check input parameters!"
+    return {
+        "repository_name": repo_name,
+        "repository_url": repo_url,
+        "repository_owner": repo_owner,
+        "stars_amount": stars,
+        "open_issues_amount": issues_amount
+    }
+
+
+def print_title(title_was_printed):
+    if not title_was_printed:
+        print("\nThe most trending github repositories"
+              " for the last week:\n")
+
+
+def print_repo_data(repo_data):
+    print_delimiter(90)
+    for repo_item_name, repo_item_value in repo_data.items():
+        print("{}: {}".format(repo_item_name, repo_item_value))
 
 
 if __name__ == "__main__":
-    interval_a = date.today()
-    interval_b = interval_a - timedelta(days=7)
     api_url = "https://api.github.com/"
     top_size = 20
     trending_repos = get_trending_repositories(
         api_url,
         top_size,
-        interval_a,
-        interval_b
+        period=7
     )
     if not trending_repos:
         exit("The service '{}' is unavailable!".format(api_url))
-    data_to_print = make_data_to_print(trending_repos)
-    if not data_to_print:
-        exit("Invalid data returned! Check input parameters!")
-    print_data(data_to_print, interval_a, interval_b)
+    title_was_printed = False
+    for repo in trending_repos:
+        repo_data = extract_data_from_repo(repo)
+        if not repo_data:
+            exit("The service '{}' is unavailable!".format(api_url))
+        if not isinstance(repo_data, dict):
+            exit(repo_data)
+        print_title(title_was_printed)
+        title_was_printed = True
+        print_repo_data(repo_data)
+
+
+

@@ -45,8 +45,8 @@ def get_total_open_issues_amount(repo):
     return repo["open_issues"]
 
 
-def print_delimiter(count):
-    delimiter = "*" * count
+def print_delimiter(asteriks_count):
+    delimiter = "*" * asteriks_count
     print(delimiter)
 
 
@@ -107,7 +107,7 @@ def print_title(title_was_printed):
 
 
 def print_repo_data(repo_data):
-    print_delimiter(90)
+    print_delimiter(asteriks_count=90)
     for repo_item_name, repo_item_value in repo_data.items():
         print("{}: {}".format(repo_item_name, repo_item_value))
 

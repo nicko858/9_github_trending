@@ -11,16 +11,15 @@ def get_trending_repositories(api_url, top_size, period):
     method = "search/repositories"
     target_url = "{}{}".format(api_url, method)
     parameters = {
-        'q': ("created:{}..{}".format(date_from, date_to)),
-        'per_page': top_size,
-        'sort': 'stars'
+        "q": ("created:{}..{}".format(date_from, date_to)),
+        "per_page": top_size,
+        "sort": "stars"
         }
-    response_code_ok = 200
     try:
         response = requests.get(target_url, params=parameters)
-        if response.status_code != response_code_ok:
+        if not response.ok:
             raise ConnectionError
-        return response.json()['items']
+        return response.json()["items"]
     except (Timeout, ConnectionError):
         return None
 
@@ -51,24 +50,23 @@ def print_delimiter(asteriks_count):
 
 
 def get_only_open_issues_amount(
-        api_url,
-        repo_owner,
-        repo_name,
-        total_open_issues_count
+    api_url,
+    repo_owner,
+    repo_name,
+    total_open_issues_count
 ):
     method = "repos/{}/{}/issues".format(repo_owner, repo_name)
     target_url = "{}{}".format(api_url, method)
-    parameters = {'per_page': total_open_issues_count, 'state': 'open'}
-    response_code_ok = 200
+    parameters = {"per_page": total_open_issues_count, "state": "open"}
     try:
         response = requests.get(target_url, params=parameters)
-        if response.status_code != response_code_ok:
+        if not response.ok:
             raise ConnectionError
     except (Timeout, ConnectionError):
-        return None
+        return "The 'List issues'- method is unavailable!"
     issues_count = 0
     for issue in response.json():
-        if 'pull_request' not in issue:
+        if "pull_request" not in issue:
             issues_count += 1
     return issues_count
 
@@ -87,8 +85,6 @@ def extract_data_from_repo(repo):
             repo_name,
             issues_and_pull_requests_count
         )
-        if issues_amount is None:
-            return None
     except (ValueError, KeyError, TypeError):
         return "Invalid data returned! Check input parameters!"
     return {
